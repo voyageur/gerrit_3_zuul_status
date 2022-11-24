@@ -1,6 +1,7 @@
 // Copyright 2018 Michel Peterson
 // Copyright 2019-2020 Radosław Piliszek
 // Copyright 2020 Balazs Gibizer
+// Copyright 2022 Bernard Cafarelli
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,15 +17,19 @@
 //
 // Original work by Michel: https://opendev.org/x/coats/src/commit/444c95738677593dcfed0cfd9667d4c4f0d596a3/coats/openstack_gerrit_zuul_status.user.js
 // Original work by Balazs: https://gist.github.com/gibizer/717e0cb5b0da0d60d5ecf1e18c0c171a/480a7d3e25919292a772bc2a68a5d701e1e7e772
+// Original work by Radosław: https://gist.github.com/yoctozepto/7ea1271c299d143388b7c1b1802ee75e/raw/7ad5a5639ee58c7d2ec3bdfd46e017d19bee5b92/gerrit_3_zuul_status.user.js
 //
 // ==UserScript==
 // @name     Gerrit 3 Zuul Status
 // @author   Michel Peterson
 // @author   Radosław Piliszek
 // @author   Balazs Gibizer
-// @version  9.0.0
-// @grant    none
-// @include  https://review.opendev.org/*
+// @author   Bernard Cafarelli
+// @version  10.0.0
+// @grant   GM_xmlhttpRequest
+// @connect
+// @match   https://review.opendev.org/*
+// @description  Display Zuul Status on main page with Gerrit 3
 // ==/UserScript==
 
 // NOTE(yoctozepto): This is not the most robust script I have ever written but it gets the job done.
@@ -172,15 +177,14 @@ const get_place_to_insert_ci_table = function(){
     return gr_endpoint_decorator;
 }
 
-const get_ci_table = function(zuul_message){
-    var lines = zuul_message.split('- ');
-
+const get_ci_table = function(json_result){
     var table = document.createElement('table');
 
     // table header
     var tr = document.createElement('tr');
     var td = document.createElement('td');
-    var result = lines[0].split('.')[0];
+    var result = json_result.message.split('.')[0];
+
     td.appendChild(document.createTextNode(result));
     if (result.includes('succ')){
         td.style.color = 'green';
@@ -192,41 +196,36 @@ const get_ci_table = function(zuul_message){
     tr.appendChild(document.createElement('td'));
     table.appendChild(tr);
 
-    for (var i=1; i<lines.length; i++){
-        var fields = lines[i].split(': ');
-        var job_name = fields[0].split(' ')[0];
-        var job_link = fields[0].split(' ')[1];
-        var job_result = fields[1];
-
+    for (const build of json_result.builds) {
         tr = document.createElement('tr');
 
         var td1 = document.createElement('td');
-        var link_text = document.createTextNode(job_name);
+        var link_text = document.createTextNode(build.job_name);
         var a = document.createElement('a')
-        a.href = job_link;
-        a.title = job_name;
+        a.href = build.log_url;
+        a.title = build.job_name;
         a.appendChild(link_text);
         td1.appendChild(a);
         tr.appendChild(td1);
 
         var td2 = document.createElement('td');
         a = document.createElement('a')
-        a.href = job_link;
-        a.title = job_name;
-        link_text = document.createTextNode(job_result);
+        a.href = build.log_url;
+        a.title = build.job_name;
+        link_text = document.createTextNode(build.result);
         a.appendChild(link_text);
         td2.appendChild(a);
 
-        if (job_result.includes('SUCCESS')){
+        if (build.result == 'SUCCESS'){
             a.style.color = 'green';
         }
-        if (job_result.includes('FAILURE')){
+        if (build.result == 'FAILURE'){
             a.style.color = 'red';
         }
-        if (job_result.includes('POST_FAILURE')){
+        if (build.result == 'POST_FAILURE'){
             a.style.color = 'orange';
         }
-        if (job_result.includes('TIMED_OUT')){
+        if (build.result == 'TIMED_OUT'){
             a.style.color = 'red';
         }
 
@@ -235,6 +234,25 @@ const get_ci_table = function(zuul_message){
         table.appendChild(tr);
     }
     return table;
+}
+
+const get_results_table_load = function(response){
+    var place_to_insert = get_place_to_insert_ci_table();
+
+    ci_table = get_ci_table(response.response);
+    get_place_to_insert_ci_table().appendChild(ci_table);
+    console.log('CI table injected');
+
+    refreshZuulStatus(place_to_insert);
+};
+
+const get_results_table = function(zuul_buildset){
+    GM_xmlhttpRequest({
+        method: "GET",
+        responseType: "json",
+        url: zuul_buildset,
+        onload: get_results_table_load,
+    });
 }
 
 const get_message_author = function(gr_message){
@@ -283,7 +301,15 @@ const get_last_zuul_message = function(){
         }
     }
 
-    return last_zuul_message;
+    // Sample URL we look for: https://zuul.opendev.org/t/openstack/buildset/e48a7e9e680e4c96b1e096612bb5671f
+    const matches_result = / (https:\/\/[^ ]+\/buildset\/[^ ]+) -/.exec(last_zuul_message);
+
+    if (!matches_result) {
+        console.log('matches_result not match - skipping table');
+        return;
+    }
+
+    return matches_result[1].replace("/t","/api/tenant");
 };
 
 var ci_table = null;
@@ -291,9 +317,9 @@ var ci_table = null;
 const inject_CI_table = function(){
     console.log('Injecting CI table...');
     var place_to_insert = get_place_to_insert_ci_table();
-    var zuul_message = get_last_zuul_message();
-    console.log('Last Zuul CI message: ' + zuul_message);
-    if (zuul_message == null){
+    var zuul_buildset = get_last_zuul_message();
+    console.log('Last Zuul CI builset: ' + zuul_buildset);
+    if (zuul_buildset == null){
         console.log('No Zuul test result comment found.');
         refreshZuulStatus(place_to_insert);
         return;
@@ -302,11 +328,8 @@ const inject_CI_table = function(){
         console.log('Remove stale CI table');
         ci_table.remove();
     }
-    ci_table = get_ci_table(zuul_message);
-    place_to_insert.appendChild(ci_table);
-    console.log('CI table injected');
 
-    refreshZuulStatus(place_to_insert);
+    get_results_table(zuul_buildset);
 };
 
 const add_performance_observer = function() {
@@ -357,7 +380,7 @@ const subscribe_to_navigation_event = function(){
 
 (function() {
     'use strict';
-    console.log('User script triggered');
+    console.log('Gerrit 3 Zuul Status User script triggered');
     add_performance_observer();
     subscribe_to_navigation_event();
 })();

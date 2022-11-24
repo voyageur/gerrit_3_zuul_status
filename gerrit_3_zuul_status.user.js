@@ -111,10 +111,10 @@ function refreshZuulStatus (toWhere) {
     }
 
     const status_url = zuul_status_url + change_id + "," + change_ver;
-    console.log('Zuul Status querying ' + status_url);
+    console.debug('Zuul Status querying ' + status_url);
 
     fetch(status_url).then(response => response.json()).then(data => {
-        console.log('Zuul Status queried ' + status_url);
+        console.debug('Zuul Status queried ' + status_url);
 
         const jobs = [];
 
@@ -150,7 +150,7 @@ function refreshZuulStatus (toWhere) {
                 toWhere.appendChild(elem);
             }
         } else {
-            console.log('Zuul Status found no jobs in ' + status_url);
+            console.debug('Zuul Status found no jobs in ' + status_url);
             if (existingTableParent) {
                 existingTableParent.parentElement.removeChild(existingTableParent);
             }
@@ -323,17 +323,18 @@ const get_last_zuul_message = function(){
 var ci_table = null;
 
 const inject_CI_table = function(){
-    console.log('Injecting CI table...');
+    console.debug('Injecting CI table...');
     var place_to_insert = get_place_to_insert_ci_table();
     var zuul_buildset = get_last_zuul_message();
-    console.log('Last Zuul CI builset: ' + zuul_buildset);
     if (zuul_buildset == null){
-        console.log('No Zuul test result comment found.');
+        console.debug('No Zuul test result comment found.');
         refreshZuulStatus(place_to_insert);
         return;
     }
+    console.debug('Last Zuul CI builset: ' + zuul_buildset);
+
     if (ci_table != null){
-        console.log('Remove stale CI table');
+        console.debug('Remove stale CI table');
         ci_table.remove();
     }
 
@@ -343,12 +344,12 @@ const inject_CI_table = function(){
 const add_performance_observer = function() {
     // try to detect when all the data is loaded for the page
     const observer = new PerformanceObserver((list, obj) => {
-        console.log('Zuul Status performance observer');
+        console.debug('Zuul Status performance observer');
         for (let entry of list.getEntries()) {
-            console.log('!!!! observed' + entry.initiatorType + '|' + entry.name);
+            console.debug('!!!! observed' + entry.initiatorType + '|' + entry.name);
             if(entry.initiatorType === "fetch"
                && entry.name.includes('submitted_together?')){
-                console.log('Last REST fetch (submitted_together) ran, inject CI table in 1 second');
+                console.debug('Last REST fetch (submitted_together) ran, inject CI table in 1 second');
 
                 // wait a second and then inject the CI table
                 setTimeout(function(){inject_CI_table();}, 1000);
@@ -371,7 +372,7 @@ const subscribe_to_navigation_event = function(){
     const main_page_regexp = RegExp('review.opendev.org/c/.*/./[0-9]+(/[0-9]+/)?$');
 
     var c = function(mutationsList, observer) {
-        console.log('Zuul Status mutation observer');
+        console.debug('Zuul Status mutation observer');
         for(const mutation of mutationsList) {
             if (mutation.type === 'childList' && href != document.location.href) {
                 href = document.location.href;

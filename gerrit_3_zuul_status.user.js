@@ -40,6 +40,9 @@
 const zuul_status_base = "https://zuul.opendev.org/";
 const refreshSpacing = 10000;
 
+var ci_table = null;
+var place_to_insert_ci_table = null;
+
 function render(jobs) {
     let table = "<table id=\"my-zuul-table\"><tbody>" +
       "<tr>" +
@@ -244,13 +247,11 @@ const get_ci_table = function(json_result){
 }
 
 const get_results_table_load = function(response){
-    var place_to_insert = get_place_to_insert_ci_table();
-
     ci_table = get_ci_table(response.response);
-    get_place_to_insert_ci_table().appendChild(ci_table);
+    place_to_insert_ci_table.appendChild(ci_table);
     console.log('CI table injected');
 
-    refreshZuulStatus(place_to_insert);
+    refreshZuulStatus(place_to_insert_ci_table);
 };
 
 const get_results_table = function(zuul_buildset){
@@ -320,15 +321,13 @@ const get_last_zuul_message = function(){
     return matches_result[1].replace("/t","/api/tenant");
 };
 
-var ci_table = null;
-
 const inject_CI_table = function(){
     console.debug('Injecting CI table...');
-    var place_to_insert = get_place_to_insert_ci_table();
+    place_to_insert_ci_table = get_place_to_insert_ci_table();
     var zuul_buildset = get_last_zuul_message();
     if (zuul_buildset == null){
         console.debug('No Zuul test result comment found.');
-        refreshZuulStatus(place_to_insert);
+        refreshZuulStatus(place_to_insert_ci_table);
         return;
     }
     console.debug('Last Zuul CI builset: ' + zuul_buildset);

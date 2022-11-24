@@ -302,7 +302,8 @@ const get_last_zuul_message = function(){
             if (message_text!=null
                 // ignore some zuul messages
                 && message_text.startsWith('Build')
-                && !message_text.includes('promote pipeline')){
+                && !message_text.includes('promote pipeline')
+                && !message_text.includes('ARM64 pipeline')){
                 last_zuul_message = message_text;
             }
         }

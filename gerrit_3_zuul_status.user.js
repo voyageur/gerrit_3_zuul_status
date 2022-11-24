@@ -90,7 +90,7 @@ function refreshZuulStatus (toWhere) {
     const zuul_console_url = zuul_status_base + "t/" + tenant_id + "/";
 
     if (typeof change_ver === "undefined") {
-        const downloadAnchor = document.getElementById('app')
+        const downloadAnchor = document.getElementById('pg-app')
                                        .shadowRoot
                                        .getElementById('app-element')
                                        .shadowRoot

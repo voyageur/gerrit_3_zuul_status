@@ -231,6 +231,13 @@ const get_ci_table = function(json_result){
 
         tr.appendChild(td2);
 
+        if (!build.voting){
+            var td3 = document.createElement('td');
+            var nv = document.createTextNode("(non-voting)");
+            td3.appendChild(nv);
+            tr.appendChild(td3);
+        }
+
         table.appendChild(tr);
     }
     return table;

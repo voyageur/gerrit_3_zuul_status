@@ -43,8 +43,8 @@ const refreshSpacing = 10000;
 var ci_table = null;
 var place_to_insert_ci_table = null;
 
-function render(jobs) {
-    let table = "<table id=\"my-zuul-table\"><tbody>" +
+function live_render(jobs) {
+    let table = "<table id=\"live-zuul-table\"><tbody>" +
       "<tr>" +
       "<th>Zuul check</th>" +
       "<th>Still running</th>" +
@@ -139,23 +139,30 @@ function refreshZuulStatus (toWhere) {
             }
         }
 
-        const existingTableParent = toWhere.querySelector('#my-zuul-table-parent');
+        const existingLiveTableParent = toWhere.querySelector('#live-zuul-table-parent');
+        const existingEndTableParent = toWhere.querySelector('#end-zuul-table-parent');
 
         // there might be no jobs pending, only some dep records (items_behind, items_after)
         if (jobs.length > 0) {
-            const html = render(jobs);
-            if (existingTableParent) {
-                existingTableParent.innerHTML = html;
+            const html = live_render(jobs);
+            if (existingEndTableParent) {
+                existingEndTableParent.style.display = "none";
+            }
+            if (existingLiveTableParent) {
+                existingLiveTableParent.innerHTML = html;
             } else {
                 const elem = document.createElement('div');
-                elem.id = 'my-zuul-table-parent';
+                elem.id = 'live-zuul-table-parent';
                 elem.innerHTML = html;
                 toWhere.appendChild(elem);
             }
         } else {
             console.debug('Zuul Status found no jobs in ' + status_url);
-            if (existingTableParent) {
-                existingTableParent.parentElement.removeChild(existingTableParent);
+            if (existingLiveTableParent) {
+                existingLiveTableParent.parentElement.removeChild(existingLiveTableParent);
+            }
+            if (existingEndTableParent) {
+                existingEndTableParent.style.display = "";
             }
         }
 
@@ -246,7 +253,10 @@ const get_ci_table = function(json_result){
 
 const get_results_table_load = function(response){
     ci_table = get_ci_table(response.response);
-    place_to_insert_ci_table.appendChild(ci_table);
+    const elem = document.createElement('div');
+    elem.id = 'end-zuul-table-parent';
+    elem.appendChild(ci_table);
+    place_to_insert_ci_table.appendChild(elem);
     console.log('CI table injected');
 
     refreshZuulStatus(place_to_insert_ci_table);

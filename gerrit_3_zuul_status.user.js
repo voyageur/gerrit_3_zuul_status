@@ -212,7 +212,8 @@ const get_ci_table = function(json_result){
         var td1 = document.createElement('td');
         var link_text = document.createTextNode(build.job_name);
         var a = document.createElement('a')
-        a.href = build.log_url;
+        // build.log_url does not get the fancy page, hardcoded tenant (same in td2 below)
+        a.href = zuul_status_base + "t/openstack/build/" + build.uuid;
         a.title = build.job_name;
         a.appendChild(link_text);
         td1.appendChild(a);
@@ -226,7 +227,7 @@ const get_ci_table = function(json_result){
 
         var td2 = document.createElement('td');
         a = document.createElement('a')
-        a.href = build.log_url;
+        a.href = zuul_status_base + "t/openstack/build/" + build.uuid;
         a.title = build.job_name;
         link_text = document.createTextNode(build.result);
         a.appendChild(link_text);

@@ -27,7 +27,7 @@
 // @author   Bernard Cafarelli
 // @version  10.0.0
 // @grant   GM_xmlhttpRequest
-// @connect
+// @connect zuul.opendev.org
 // @match   https://review.opendev.org/*
 // @description  Display Zuul Status on main page with Gerrit 3
 // ==/UserScript==

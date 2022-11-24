@@ -209,6 +209,12 @@ const get_ci_table = function(json_result){
         a.title = build.job_name;
         a.appendChild(link_text);
         td1.appendChild(a);
+        if (!build.voting){
+            var nv = document.createElement('span');
+            nv.setAttribute("style","font-size: small;");
+            nv.textContent = " (non-voting)";
+            td1.appendChild(nv);
+        }
         tr.appendChild(td1);
 
         var td2 = document.createElement('td');
@@ -231,15 +237,7 @@ const get_ci_table = function(json_result){
         if (build.result == 'TIMED_OUT'){
             a.style.color = 'red';
         }
-
         tr.appendChild(td2);
-
-        if (!build.voting){
-            var td3 = document.createElement('td');
-            var nv = document.createTextNode("(non-voting)");
-            td3.appendChild(nv);
-            tr.appendChild(td3);
-        }
 
         table.appendChild(tr);
     }

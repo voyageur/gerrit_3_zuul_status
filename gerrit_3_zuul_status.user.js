@@ -78,7 +78,7 @@ function render(jobs) {
 function refreshZuulStatus (toWhere) {
     const url = location.href;
     // an example url: https://review.opendev.org/c/openstack/kolla-ansible/+/696841/133
-    const matches_url = /\/c\/([^/]+)\/([^/]+)\/\+\/(\d+)(?:\/(\d+))?$/.exec(url);
+    const matches_url = /\/c\/([^/]+)\/([^/]+)\/\+\/(\d+)(?:\/(\d+))?\/?$/.exec(url);
     if (!matches_url) {
         console.log('matches_url not match - skipping refresh');
         return;

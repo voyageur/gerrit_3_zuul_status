@@ -26,9 +26,7 @@
 // @author   Balazs Gibizer
 // @author   Bernard Cafarelli
 // @version  10.0.0
-// @grant   GM_xmlhttpRequest
-// @connect zuul.opendev.org
-// @match   https://review.opendev.org/*
+// @match    https://review.opendev.org/*
 // @description  Display Zuul Status on main page with Gerrit 3
 // ==/UserScript==
 
@@ -253,7 +251,7 @@ const get_ci_table = function(json_result){
 }
 
 const get_results_table_load = function(response){
-    ci_table = get_ci_table(response.response);
+    ci_table = get_ci_table(response);
     const elem = document.createElement('div');
     elem.id = 'end-zuul-table-parent';
     elem.appendChild(ci_table);
@@ -264,12 +262,9 @@ const get_results_table_load = function(response){
 };
 
 const get_results_table = function(zuul_buildset){
-    GM_xmlhttpRequest({
-        method: "GET",
-        responseType: "json",
-        url: zuul_buildset,
-        onload: get_results_table_load,
-    });
+    fetch(zuul_buildset)
+        .then((response) => response.json())
+        .then((data) => get_results_table_load(data));
 }
 
 const get_message_author = function(gr_message){
